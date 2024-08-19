@@ -318,6 +318,10 @@ int vi_capture_setup(
 struct tegra_vi_channel *get_tegra_vi_channel(
 	unsigned int stream_id,
 	unsigned int virtual_channel_id);
+
+
+void vi_capture_abort(struct tegra_vi_channel *chan);
+
 /**
  * @brief Reset an opened VI channel, all pending capture requests to RCE are
  * discarded.

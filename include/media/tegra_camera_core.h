@@ -31,6 +31,15 @@
 #define TEGRA_VF_DEF		MEDIA_BUS_FMT_SRGGB10_1X10
 #define TEGRA_IMAGE_FORMAT_DEF	32
 
+#ifndef V4L2_PIX_FMT_AVT_G4C2
+#define V4L2_PIX_FMT_AVT_G4C2    v4l2_fourcc('T', 'P', '3', '1') /* 0x31 mipi datatype  */
+#endif
+
+#ifndef MEDIA_BUS_FMT_AVT_G4C2_1X8
+#define MEDIA_BUS_FMT_AVT_G4C2_1X8	0x5002
+#endif
+
+
 enum tegra_image_dt {
 	TEGRA_IMAGE_DT_YUV420_8 = 24,
 	TEGRA_IMAGE_DT_YUV420_10,
