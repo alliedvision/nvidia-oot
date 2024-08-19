@@ -520,7 +520,7 @@ uncorr_err:
 static inline int32_t vi5_capture_timeout(struct tegra_channel *chan)
 {
 	if (chan->fmtinfo->code == MEDIA_BUS_FMT_AVT_G4C2_1X8) 
-		return 0;
+		return -1; // Wait infinite
 
 	return chan->capture_timeout_ms;
 }

@@ -435,7 +435,7 @@ int vi_capture_request(
  *
  * @param[in]	chan		VI channel context
  * @param[in]	timeout_ms	Time to wait for status completion [ms], set to
- *				0 for indefinite
+ *				a negative value for indefinite
  *
  * @returns	0 (success), neg. errno (failure)
  */
