@@ -841,6 +841,15 @@ struct tegra_vi_channel *get_tegra_vi_channel(
 	return channels[stream_id][virtual_channel_id];
 }
 
+void vi_capture_abort(struct tegra_vi_channel *chan) 
+{
+	struct vi_capture *capture = chan->capture_data;
+	int i;
+	
+	for (i = 0; i < capture->queue_depth; i++)
+		complete(&capture->capture_resp);
+}
+
 int vi_capture_reset(
 	struct tegra_vi_channel *chan,
 	uint32_t reset_flags)

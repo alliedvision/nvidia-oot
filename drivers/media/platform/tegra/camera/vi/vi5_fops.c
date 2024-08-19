@@ -393,6 +393,7 @@ static void vi5_setup_surface(struct tegra_channel *chan,
 	u32 format = chan->fmtinfo->img_fmt;
 	u32 bpl = chan->format.bytesperline;
 	u32 data_type = chan->fmtinfo->img_dt;
+	u32 code = chan->fmtinfo->code;
 	u32 nvcsi_stream = chan->port[vi_port];
 	struct capture_descriptor_memoryinfo *desc_memoryinfo =
 		&chan->tegra_vi_channel[vi_port]->
@@ -413,10 +414,20 @@ static void vi5_setup_surface(struct tegra_channel *chan,
 	desc->ch_cfg.match.vc = (1u << chan->virtual_channel); /* one-hot bit encoding */
 	desc->ch_cfg.frame.frame_x = width;
 	desc->ch_cfg.frame.frame_y = height;
+	if (code == MEDIA_BUS_FMT_AVT_G4C2_1X8) {
+		desc->ch_cfg.dt_enable = 1;
+		desc->ch_cfg.dt_override = TEGRA_IMAGE_DT_RAW8;		
+		desc->ch_cfg.match.datatype = 0x0;
+		desc->ch_cfg.match.datatype_mask = 0x0;
+	} else {
 	desc->ch_cfg.match.datatype = data_type;
 	desc->ch_cfg.match.datatype_mask = 0x3f;
+		desc->ch_cfg.dt_enable = 0;
+	}
+	
 	desc->ch_cfg.pixfmt_enable = 1;
 	desc->ch_cfg.pixfmt.format = format;
+
 
 	desc_memoryinfo->surface[0].base_address = offset;
 	desc_memoryinfo->surface[0].size = chan->format.bytesperline * height;
@@ -506,6 +517,14 @@ uncorr_err:
 	spin_unlock_irqrestore(&chan->capture_state_lock, flags);
 }
 
+static inline int32_t vi5_capture_timeout(struct tegra_channel *chan)
+{
+	if (chan->fmtinfo->code == MEDIA_BUS_FMT_AVT_G4C2_1X8) 
+		return 0;
+
+	return chan->capture_timeout_ms;
+}
+
 static void vi5_capture_dequeue(struct tegra_channel *chan,
 	struct tegra_channel_buffer *buf)
 {
@@ -516,7 +535,7 @@ static void vi5_capture_dequeue(struct tegra_channel *chan,
 	unsigned long flags;
 	struct tegra_mc_vi *vi = chan->vi;
 	struct vb2_v4l2_buffer *vb = &buf->buf;
-	int timeout_ms = CAPTURE_TIMEOUT_MS;
+	const int32_t timeout_ms = vi5_capture_timeout(chan);
 	struct timespec64 ts;
 	struct capture_descriptor *descr = NULL;
 
@@ -527,7 +546,6 @@ static void vi5_capture_dequeue(struct tegra_channel *chan,
 			goto rel_buf;
 
 		/* Dequeue a frame and check its capture status */
-		timeout_ms = chan->capture_timeout_ms;
 		err = vi_capture_status(chan->tegra_vi_channel[vi_port], timeout_ms);
 		if (err) {
 			if (err == -ETIMEDOUT) {
@@ -991,8 +1009,14 @@ static int vi5_channel_stop_streaming(struct vb2_queue *vq)
 	struct tegra_channel *chan = vb2_get_drv_priv(vq);
 	long err;
 	int vi_port = 0;
-	if (!chan->bypass)
+	if (!chan->bypass) {
+		for (vi_port = 0; vi_port < chan->valid_ports; vi_port++) {
+			vi_capture_abort(chan->tegra_vi_channel[vi_port]);
+		}
+		
 		vi5_channel_stop_kthreads(chan);
+	}
+		
 
 	/* csi stream/sensor(s) devices to be closed before vi channel */
 	tegra_channel_set_stream(chan, false);

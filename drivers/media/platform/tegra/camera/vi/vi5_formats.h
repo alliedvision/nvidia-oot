@@ -82,6 +82,8 @@ static const struct tegra_video_format vi5_video_formats[] = {
 	/* RAW 7: TODO */
 
 	/* RAW 8 */
+	TEGRA_VIDEO_FORMAT(RAW8, 8, AVT_G4C2_1X8, 1, 1, T_R8,
+				RAW8, AVT_G4C2, "AVT G4C2"),
 	TEGRA_VIDEO_FORMAT(RAW8, 8, SRGGB8_1X8, 1, 1, T_R8,
 				RAW8, SRGGB8, "RGRG.. GBGB.."),
 	TEGRA_VIDEO_FORMAT(RAW8, 8, SGRBG8_1X8, 1, 1, T_R8,
