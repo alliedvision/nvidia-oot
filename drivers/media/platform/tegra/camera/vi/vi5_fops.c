@@ -287,18 +287,11 @@ static int vi5_channel_open(struct tegra_channel *chan, u32 vi_port)
 static int vi5_channel_setup_queue(struct tegra_channel *chan,
 	unsigned int *nbuffers)
 {
-	int ret = 0;
-
 	*nbuffers = clamp(*nbuffers, CAPTURE_MIN_BUFFERS, CAPTURE_MAX_BUFFERS);
-
-	ret = tegra_channel_alloc_buffer_queue(chan, *nbuffers);
-	if (ret < 0)
-		goto done;
 
 	chan->capture_reqs_enqueued = 0;
 
-done:
-	return ret;
+	return 0;
 }
 
 static struct tegra_csi_channel *find_linked_csi_channel(
@@ -875,6 +868,10 @@ static int vi5_channel_start_streaming(struct vb2_queue *vq, u32 count)
 	struct sensor_mode_properties *sensor_mode;
 	struct camera_common_data *s_data;
 	unsigned int emb_buf_size = 0;
+
+	ret = tegra_channel_alloc_buffer_queue(chan, vq->num_buffers);
+	if (ret < 0)
+		goto err_open_ex;
 
 	/* Skip in bypass mode */
 	if (!chan->bypass) {
