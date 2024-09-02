@@ -726,13 +726,15 @@ int tegra_channel_alloc_buffer_queue(struct tegra_channel *chan,
 {
 	struct device *vi_unit_dev = tegra_channel_get_vi_unit(chan);
 
-	chan->buffer_state = devm_kzalloc(vi_unit_dev,
-		(num_buffers * sizeof(*chan->buffer_state)), GFP_KERNEL);
+	chan->buffer_state = devm_krealloc(vi_unit_dev, chan->buffer_state,
+		(num_buffers * sizeof(*chan->buffer_state)),
+		GFP_KERNEL | __GFP_ZERO);
 	if (!chan->buffer_state)
 		goto alloc_error;
 
-	chan->buffers = devm_kzalloc(vi_unit_dev,
-		(num_buffers * sizeof(*chan->buffers)), GFP_KERNEL);
+	chan->buffers = devm_krealloc(vi_unit_dev, chan->buffers,
+		(num_buffers * sizeof(*chan->buffers)),
+		GFP_KERNEL | __GFP_ZERO);
 	if (!chan->buffers)
 		goto alloc_error;
 
