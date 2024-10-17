@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2018-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 /*
  * tegracam_v4l2 - tegra camera framework for v4l2 support
- *
- * Copyright (c) 2018-2024, NVIDIA CORPORATION.  All rights reserved.
  */
+
+#include <nvidia/conftest.h>
+
 #include <linux/types.h>
 #include <media/tegra-v4l2-camera.h>
 #include <media/tegracam_core.h>
@@ -112,7 +114,11 @@ static int v4l2sd_g_input_status(struct v4l2_subdev *sd, u32 *status)
 	return 0;
 }
 
-static int cam_g_frame_interval(struct v4l2_subdev *sd, struct v4l2_subdev_frame_interval *ival)
+static int cam_g_frame_interval(struct v4l2_subdev *sd,
+#if defined(NV_V4L2_SUBDEV_PAD_OPS_STRUCT_HAS_GET_SET_FRAME_INTERVAL)
+				struct v4l2_subdev_state *sd_state,
+#endif
+				struct v4l2_subdev_frame_interval *ival)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct camera_common_data *s_data = to_camera_common_data(&client->dev);
@@ -128,8 +134,10 @@ static int cam_g_frame_interval(struct v4l2_subdev *sd, struct v4l2_subdev_frame
 static struct v4l2_subdev_video_ops v4l2sd_video_ops = {
 	.s_stream	= v4l2sd_stream,
 	.g_input_status = v4l2sd_g_input_status,
+#if !defined(NV_V4L2_SUBDEV_PAD_OPS_STRUCT_HAS_GET_SET_FRAME_INTERVAL)
 	.g_frame_interval = cam_g_frame_interval,
 	.s_frame_interval = cam_g_frame_interval,
+#endif
 };
 
 static struct v4l2_subdev_core_ops v4l2sd_core_ops = {
@@ -176,6 +184,10 @@ static int v4l2sd_set_fmt(struct v4l2_subdev *sd,
 }
 
 static struct v4l2_subdev_pad_ops v4l2sd_pad_ops = {
+#if defined(NV_V4L2_SUBDEV_PAD_OPS_STRUCT_HAS_GET_SET_FRAME_INTERVAL)
+	.get_frame_interval = cam_g_frame_interval,
+	.set_frame_interval = cam_g_frame_interval,
+#endif
 	.set_fmt = v4l2sd_set_fmt,
 	.get_fmt = v4l2sd_get_fmt,
 	.enum_mbus_code = camera_common_enum_mbus_code,
