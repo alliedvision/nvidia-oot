@@ -2569,12 +2569,20 @@ int tegra_channel_init_video(struct tegra_channel *chan)
 	}
 
 	chan->video = video_device_alloc();
+	
+	chan->video->prio = kzalloc(sizeof(*chan->video->prio), GFP_KERNEL);
+	if (!chan->video->prio) {
+		video_device_release(chan->video);
+		dev_err(&chan->video->dev, "failed allocate prio\n");
+		return -ENOMEM;
+	}
 
 	/* Initialize the media entity... */
 	chan->pad.flags = MEDIA_PAD_FL_SINK;
 	ret = tegra_media_entity_init(&chan->video->entity, 1,
 					&chan->pad, false, false);
 	if (ret < 0) {
+		kfree(chan->video->prio);
 		video_device_release(chan->video);
 		dev_err(&chan->video->dev, "failed to init video entity\n");
 		return ret;
@@ -2613,6 +2621,7 @@ int tegra_channel_init_video(struct tegra_channel *chan)
 	return ret;
 
 ctrl_init_error:
+	kfree(chan->video->prio);
 	video_device_release(chan->video);
 	media_entity_cleanup(&chan->video->entity);
 	v4l2_ctrl_handler_free(&chan->ctrl_handler);
@@ -2729,6 +2738,7 @@ int tegra_channel_cleanup_video(struct tegra_channel *chan)
 {
 	v4l2_ctrl_handler_free(&chan->ctrl_handler);
 	media_entity_cleanup(&chan->video->entity);
+	kfree(chan->video->prio);
 	video_device_release(chan->video);
 	return 0;
 }
