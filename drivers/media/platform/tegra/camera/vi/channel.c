@@ -1145,7 +1145,7 @@ tegra_channel_enum_format(struct file *file, void *fh, struct v4l2_fmtdesc *f)
 
 	index -= 1;
 	f->pixelformat = tegra_core_get_fourcc_by_idx(chan, index);
-
+	
 	if (f->pixelformat == V4L2_PIX_FMT_AVT_G4C2) {
 		const struct tegra_video_format *format = tegra_core_get_format_by_fourcc(chan, V4L2_PIX_FMT_AVT_G4C2);
 		memcpy(&f->description[0], &format->description[0], 32);
@@ -2122,6 +2122,14 @@ __tegra_channel_try_format(struct tegra_channel *chan,
 	ret = v4l2_subdev_call(sd, pad, set_fmt, &cfg, &fmt);
 	if (ret == -ENOIOCTLCMD)
 		return -ENOTTY;
+
+	if (vfmt->code != fmt.format.code) {
+                vfmt = tegra_core_get_format_by_code(chan, fmt.format.code, 0);
+                if (!vfmt)
+                        return -EINVAL;
+               
+                pix->pixelformat = vfmt->fourcc;
+        }		
 
 	v4l2_fill_pix_format(pix, &fmt.format);
 
