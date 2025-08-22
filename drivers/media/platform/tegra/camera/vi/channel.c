@@ -2237,12 +2237,12 @@ __tegra_channel_try_format(struct tegra_channel *chan,
 		return -ENOTTY;
 
 	if (vfmt->code != fmt.format.code) {
-                vfmt = tegra_core_get_format_by_code(chan, fmt.format.code, 0);
-                if (!vfmt)
-                        return -EINVAL;
-               
-                pix->pixelformat = vfmt->fourcc;
-        }		
+		vfmt = tegra_core_get_format_by_code(chan, fmt.format.code, 0);
+		if (!vfmt)
+			return -EINVAL;
+
+			pix->pixelformat = vfmt->fourcc;
+	}		
 
 	v4l2_fill_pix_format(pix, &fmt.format);
 
