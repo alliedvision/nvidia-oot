@@ -2241,7 +2241,7 @@ __tegra_channel_try_format(struct tegra_channel *chan,
 		if (!vfmt)
 			return -EINVAL;
 
-			pix->pixelformat = vfmt->fourcc;
+		pix->pixelformat = vfmt->fourcc;
 	}		
 
 	v4l2_fill_pix_format(pix, &fmt.format);
