@@ -2695,6 +2695,14 @@ static int tegra_channel_csi_init(struct tegra_channel *chan)
 	return ret;
 }
 
+static void tegra_channel_video_release(struct video_device *vdev)
+{
+	if (vdev)
+		kfree(vdev->prio);
+	
+	video_device_release(vdev);
+}
+
 int tegra_channel_init_video(struct tegra_channel *chan)
 {
 	struct tegra_mc_vi *vi = chan->vi;
@@ -2714,7 +2722,7 @@ int tegra_channel_init_video(struct tegra_channel *chan)
 	
 	chan->video->prio = kzalloc(sizeof(*chan->video->prio), GFP_KERNEL);
 	if (!chan->video->prio) {
-		video_device_release(chan->video);
+		tegra_channel_video_release(chan->video);
 		dev_err(&chan->video->dev, "failed allocate prio\n");
 		return -ENOMEM;
 	}
@@ -2725,7 +2733,7 @@ int tegra_channel_init_video(struct tegra_channel *chan)
 					&chan->pad, false, false);
 	if (ret < 0) {
 		kfree(chan->video->prio);
-		video_device_release(chan->video);
+		tegra_channel_video_release(chan->video);
 		dev_err(&chan->video->dev, "failed to init video entity\n");
 		return ret;
 	}
@@ -2762,7 +2770,7 @@ int tegra_channel_init_video(struct tegra_channel *chan)
 	chan->video->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
 	chan->video->device_caps |= V4L2_CAP_EXT_PIX_FORMAT;
 	chan->video->vfl_dir = VFL_DIR_RX;
-	chan->video->release = video_device_release_empty;
+	chan->video->release = tegra_channel_video_release;
 	chan->video->ioctl_ops = &tegra_channel_ioctl_ops;
 	chan->video->ctrl_handler = &chan->ctrl_handler;
 	chan->video->lock = &chan->video_lock;
@@ -2772,10 +2780,9 @@ int tegra_channel_init_video(struct tegra_channel *chan)
 	return ret;
 
 ctrl_init_error:
-	kfree(chan->video->prio);
 	media_entity_cleanup(&chan->video->entity);
 	v4l2_ctrl_handler_free(&chan->ctrl_handler);
-	video_device_release(chan->video);
+	tegra_channel_video_release(chan->video);
 	return ret;
 }
 EXPORT_SYMBOL(tegra_channel_init_video);
@@ -2889,8 +2896,7 @@ int tegra_channel_cleanup_video(struct tegra_channel *chan)
 {
 	v4l2_ctrl_handler_free(&chan->ctrl_handler);
 	media_entity_cleanup(&chan->video->entity);
-	kfree(chan->video->prio);
-	video_device_release(chan->video);
+	tegra_channel_video_release(chan->video);
 	return 0;
 }
 EXPORT_SYMBOL(tegra_channel_cleanup_video);
